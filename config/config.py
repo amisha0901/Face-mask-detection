@@ -1,4 +1,4 @@
 image_size = (64,64)
-class_indices = ['Bear', 'Bird', 'Cat', 'Cow', 'Deer', 'Dog', 'Dolphin', 'Elephant', 'Giraffe', 'Horse', 'Kangaroo', 'Lion', 'Panda', 'Tiger', 'Zebra']
+class_indices = ['with_mask', 'without_mask']
 
 port = 8000

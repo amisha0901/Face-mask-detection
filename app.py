@@ -5,13 +5,13 @@ import numpy as np
 from io import BytesIO
 from config import config
 
-model = tf.keras.models.load_model("lib/animal_prediction.keras")
+model = tf.keras.models.load_model("lib/face_mask_detection.keras")
 
 app = Flask(__name__)
 
 @app.route("/")
 def index():
-    return render_template("index.html")
+    return render_template("index2.html")
 
 # @app.route("/classify", methods = ["POST"])
 # def get_prediction():
@@ -60,28 +60,32 @@ def index():
 #         "confidence": round(confidence, 4)
 #     })
 
-
-@app.route("/classify", methods=["POST"])
+@app.route("/classify", methods = ["POST"])
 def get_prediction():
     file = request.files["image"]
+
     img_bytes = BytesIO(file.read())
 
-    input_image = image.load_img(img_bytes, target_size=config.image_size)
+    input_image = image.load_img(
+        img_bytes,
+        target_size=config.image_size
+    )
+
     image_array = image.img_to_array(input_image) / 255.0
     test_array = np.expand_dims(image_array, axis=0)
 
     prediction = model.predict(test_array, verbose=0)
 
-    predicted_index = np.argmax(prediction[0])
+    predicted_index = int(np.argmax(prediction[0]))
     predicted_label = config.class_indices[predicted_index]
-    confidence = float(prediction[0][predicted_index])
+    confidence = float(prediction[0][predicted_index]) * 100
 
     return jsonify({
         "success": True,
         "predictions": [
             {
-                "description": predicted_label,
-                "confidence": confidence * 100
+                "description": predicted_label.replace("_", " ").title(),
+                "confidence": round(confidence, 2)
             }
         ]
     })

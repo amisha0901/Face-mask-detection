@@ -1,112 +1,292 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Mask Detection</title>
+    <meta charset="UTF-8">
+    <title>Face Mask Detection</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-      justify-content: center;
-      align-items: center;
-      background: #f7f7f7;
-    }
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-    h1 {
-      margin-bottom: 1rem;
-      color: #333;
-    }
+        body {
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1f4037, #99f2c8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
 
-    #video {
-      width: 320px;
-      height: 240px;
-      background: #000;
-      border-radius: 8px;
-      border: 2px solid #555;
-      object-fit: cover;
-    }
+        .container {
+            background: #fff;
+            width: 100%;
+            max-width: 520px;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.25);
+        }
 
-    .controls {
-      margin-top: 1rem;
-      display: flex;
-      gap: 12px;
-    }
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            color: #222;
+        }
 
-    button {
-      padding: 10px 18px;
-      font-size: 16px;
-      border: none;
-      border-radius: 6px;
-      background: #0078ff;
-      color: #fff;
-      cursor: pointer;
-    }
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
 
-    button:disabled {
-      background: #aaa;
-      cursor: not-allowed;
-    }
+        .upload-area {
+            border: 3px dashed #1f4037;
+            padding: 40px;
+            border-radius: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.3s;
+            background: #f5fffa;
+        }
 
-    #result {
-      margin-top: 1.5rem;
-      font-size: 18px;
-      color: #222;
-      padding: 8px 12px;
-      background: #fff;
-      border-radius: 6px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-    }
-  </style>
+        .upload-area:hover {
+            background: #eafff4;
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        .upload-text {
+            font-weight: 600;
+            color: #1f4037;
+        }
+
+        .upload-hint {
+            font-size: 13px;
+            color: #888;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .preview-container {
+            display: none;
+            margin-top: 25px;
+            text-align: center;
+        }
+
+        .image-preview {
+            width: 100%;
+            max-height: 280px;
+            object-fit: contain;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            margin-top: 10px;
+            transition: 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #1f4037, #99f2c8);
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+        }
+
+        .btn-secondary {
+            background: #eee;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #eee;
+            border-top: 4px solid #1f4037;
+            border-radius: 50%;
+            margin: 0 auto 10px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            100% { transform: rotate(360deg); }
+        }
+
+        .results {
+            display: none;
+            margin-top: 25px;
+        }
+
+        .result-card {
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            background: #f6fff9;
+        }
+
+        .result-label {
+            font-size: 22px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .result-confidence {
+            font-size: 18px;
+            color: #1f4037;
+        }
+
+        .error {
+            display: none;
+            background: #ffe1e1;
+            color: #c00;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .with-mask {
+            color: green;
+        }
+
+        .no-mask {
+            color: red;
+        }
+    </style>
 </head>
 
 <body>
-  <h1>Face Mask Detection</h1>
 
-  <video id="video" autoplay muted></video>
+<div class="container">
 
-  <div class="controls">
-    <button id="startBtn">Start Camera</button>
-    <button id="detectBtn" disabled>Detect Mask</button>
-  </div>
+    <h1>😷 Face Mask Detection</h1>
+    <p class="subtitle">Upload a face image to detect mask usage</p>
 
-  <div id="result">Result: —</div>
+    <div class="upload-area" id="uploadArea">
+        <div class="upload-icon">📸</div>
+        <div class="upload-text">Click or Drag Image</div>
+        <div class="upload-hint">PNG, JPG, JPEG</div>
+        <input type="file" id="fileInput" accept="image/*">
+    </div>
 
-  <script>
-    const video = document.getElementById("video");
-    const startBtn = document.getElementById("startBtn");
+    <div class="preview-container" id="previewContainer">
+        <img id="imagePreview" class="image-preview">
+        <button class="btn btn-primary" id="detectBtn">Detect Mask</button>
+        <button class="btn btn-secondary" id="resetBtn">Upload Another</button>
+    </div>
+
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+        Detecting face mask...
+    </div>
+
+    <div class="results" id="results">
+        <div class="result-card">
+            <div class="result-label" id="resultLabel"></div>
+            <div class="result-confidence" id="resultConfidence"></div>
+        </div>
+    </div>
+
+    <div class="error" id="error"></div>
+
+</div>
+
+<script>
+    const uploadArea = document.getElementById("uploadArea");
+    const fileInput = document.getElementById("fileInput");
+    const previewContainer = document.getElementById("previewContainer");
+    const imagePreview = document.getElementById("imagePreview");
     const detectBtn = document.getElementById("detectBtn");
-    const resultEl = document.getElementById("result");
+    const resetBtn = document.getElementById("resetBtn");
+    const loading = document.getElementById("loading");
+    const results = document.getElementById("results");
+    const error = document.getElementById("error");
+    const resultLabel = document.getElementById("resultLabel");
+    const resultConfidence = document.getElementById("resultConfidence");
 
-    // Start camera
-    startBtn.addEventListener("click", async () => {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        video.srcObject = stream;
-        detectBtn.disabled = false;
-        resultEl.textContent = "Result: Camera started";
-      } catch (err) {
-        console.error(err);
-        resultEl.textContent = "Result: Unable to access camera";
-      }
-    });
+    let selectedFile = null;
 
-    // Dummy detection event (replace with real inferencing)
-    detectBtn.addEventListener("click", () => {
-      resultEl.textContent = "Result: Detecting…";
+    uploadArea.onclick = () => fileInput.click();
 
-      // Example: simulate detection
-      setTimeout(() => {
-        const wearingMask = Math.random() < 0.5;
-        resultEl.textContent = wearingMask
-          ? "Result: Mask Detected"
-          : "Result: No Mask Detected";
-      }, 1000);
-    });
-  </script>
+    fileInput.onchange = () => {
+        selectedFile = fileInput.files[0];
+        if (!selectedFile) return;
+
+        const reader = new FileReader();
+        reader.onload = () => {
+            imagePreview.src = reader.result;
+            uploadArea.style.display = "none";
+            previewContainer.style.display = "block";
+        };
+        reader.readAsDataURL(selectedFile);
+    };
+
+    detectBtn.onclick = async () => {
+        loading.style.display = "block";
+        results.style.display = "none";
+        error.style.display = "none";
+
+        const formData = new FormData();
+        formData.append("image", selectedFile);
+
+        try {
+            const response = await fetch("/classify", {
+                method: "POST",
+                body: formData
+            });
+
+            const data = await response.json();
+            const result = data.predictions[0];
+
+            resultLabel.textContent = result.description;
+            resultConfidence.textContent = `Confidence: ${result.confidence}%`;
+
+            resultLabel.className =
+                result.description.toLowerCase().includes("no")
+                ? "result-label no-mask"
+                : "result-label with-mask";
+
+            results.style.display = "block";
+        } catch {
+            error.textContent = "Prediction failed. Try again.";
+            error.style.display = "block";
+        } finally {
+            loading.style.display = "none";
+        }
+    };
+
+    resetBtn.onclick = () => {
+        fileInput.value = "";
+        selectedFile = null;
+        uploadArea.style.display = "block";
+        previewContainer.style.display = "none";
+        results.style.display = "none";
+        error.style.display = "none";
+    };
+</script>
+
 </body>
 </html>
